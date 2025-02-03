@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Playlist Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #121212;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 40%;
+            margin: 100px auto;
+            background: #1db954;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            font-size: 24px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #fff;
+            color: #1db954;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #f1f1f1;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Playlist Downloader</h1>
+        <p>Введите ссылку на плейлист Spotify и скачайте его в формате MP3.</p>
+        <form id="playlistForm">
+            <input type="text" id="playlistUrl" name="playlist_url" placeholder="Вставьте ссылку на плейлист" required>
+            <button type="submit">Скачать</button>
+        </form>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        document.getElementById("playlistForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let playlistUrl = document.getElementById("playlistUrl").value;
+            document.getElementById("status").innerText = "⏳ Идёт скачивание...";
+
+            let formData = new FormData();
+            formData.append("playlist_url", playlistUrl);
+
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error("Ошибка скачивания");
+            })
+            .then(blob => {
+                let url = window.URL.createObjectURL(blob);
+                let a = document.createElement("a");
+                a.href = url;
+                a.download = "playlist.zip";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                document.getElementById("status").innerText = "✅ Готово! Плейлист скачан.";
+            })
+            .catch(error => {
+                document.getElementById("status").innerText = "❌ Ошибка: " + error;
+            });
+        });
+    </script>
+</body>
+</html>
+
+
