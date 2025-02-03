@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=devicFpe-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Playlist Downloader</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        
+
         body {
             font-family: 'Roboto', sans-serif;
             text-align: center;
@@ -21,114 +21,119 @@
             align-items: center;
             justify-content: center;
         }
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 20px;
-            font-size: 36px;
-            font-weight: bold;
-            text-align: left;
-            color: #fff;
-        }
-        .header a {
-            text-decoration: none;
-            color: #fff;
-            cursor: pointer;
-        }
         .container {
             width: 40%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.8);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            margin-top: 80px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease-in-out;
+        }
+        .container:hover {
+            transform: scale(1.02);
         }
         h1 {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
+            margin-bottom: 15px;
+        }
+        p {
+            font-size: 16px;
+            opacity: 0.9;
         }
         input {
-            width: 80%;
-            padding: 10px;
+            width: 85%;
+            padding: 12px;
             margin: 15px 0;
             border: none;
             border-radius: 5px;
             font-size: 16px;
-            font-family: 'Roboto', sans-serif;
             background: black;
             color: rgb(0, 255, 55);
+            outline: none;
+            text-align: center;
         }
         button {
-            background: black;
-            color: rgb(0, 255, 55);
-            padding: 12px 20px;
+            background: #1db954;
+            color: white;
+            padding: 14px 24px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 700;
-            transition: 0.3s;
+            transition: 0.3s ease-in-out;
         }
         button:hover {
-            background: #333;
+            background: #17a74d;
+            transform: scale(1.05);
         }
         #status {
             margin-top: 15px;
             font-size: 16px;
-            color: #fff;
+            font-weight: bold;
+            color: #ffcc00;
         }
-        #trackList {
-            margin-top: 20px;
-            text-align: left;
-            list-style: none;
-            padding: 0;
-        }
-        #trackList li {
-            background: rgba(255, 255, 255, 0.1);
+        #downloadLink {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            display: none;
+            text-decoration: none;
             padding: 10px;
-            margin: 5px 0;
+            background: #0b6623;
             border-radius: 5px;
+        }
+        #downloadLink:hover {
+            background: #0a5c1f;
         }
     </style>
 </head>
 <body>
-    <div class="header"><a href="#">SpotifyDL</a></div>
     <div class="container">
-        <h1>Spotify Playlist Downloader</h1>
-        <p>Введите ссылку на плейлист Spotify и скачайте его в формате MP3 в ZIP-архиве</p>
+        <h1>Spotify Playlist Downloader 🎵</h1>
+        <p>Введите ссылку на плейлист Spotify и скачайте его в формате MP3 (ZIP-архив)</p>
+        
         <form id="playlistForm">
+            {% csrf_token %}
             <input type="text" id="playlistUrl" name="playlist_url" placeholder="Вставьте ссылку на плейлист" required>
-            <button type="submit">Скачать</button>
+            <button type="submit">📥 Скачать</button>
         </form>
+        
         <p id="status"></p>
-        <ul id="trackList"></ul>
+        <a id="downloadLink" href="#" download>⬇️ Скачать ZIP-файл</a>
     </div>
 
     <script>
         document.getElementById("playlistForm").addEventListener("submit", function(event) {
             event.preventDefault();
             let playlistUrl = document.getElementById("playlistUrl").value;
-            document.getElementById("status").innerText = "⏳ Загрузка списка треков...";
-            document.getElementById("trackList").innerHTML = "";
+            document.getElementById("status").innerText = "⏳ Обработка запроса...";
+            document.getElementById("downloadLink").style.display = "none";
 
             let formData = new FormData();
             formData.append("playlist_url", playlistUrl);
 
-            fetch("/get_playlist_tracks", {
+            fetch("", {
                 method: "POST",
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка сервера: ${response.status} (${response.statusText})`);
+                }
+                return response.json();
+            })
             .then(data => {
-                document.getElementById("status").innerText = "✅ Треки загружены";
-                let trackList = document.getElementById("trackList");
-                data.tracks.forEach(track => {
-                    let li = document.createElement("li");
-                    li.textContent = track;
-                    trackList.appendChild(li);
-                });
+                if (data.error) {
+                    document.getElementById("status").innerText = "❌ Ошибка: " + data.error;
+                } else {
+                    document.getElementById("status").innerText = "✅ Треки загружены! Скачивание готово.";
+                    let downloadLink = document.getElementById("downloadLink");
+                    downloadLink.href = data.download_url;
+                    downloadLink.style.display = "inline-block";
+                }
             })
             .catch(error => {
                 document.getElementById("status").innerText = "❌ Ошибка: " + error;
